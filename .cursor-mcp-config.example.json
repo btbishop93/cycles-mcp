@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cycles": {
+      "command": "node",
+      "args": ["/Users/brenden/Developer/hobby/cycles-mcp/dist/index.js"]
+    }
+  }
+}
+
