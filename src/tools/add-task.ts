@@ -1,19 +1,19 @@
-import { writeFile, readFile, readdir } from 'fs/promises';
-import { join } from 'path';
-import { loadConfig } from '../config.js';
+import { writeFile, readFile, readdir } from "fs/promises";
+import { join } from "path";
+import { loadConfig } from "../config.js";
 import {
   loadTemplate,
   replaceTemplateVars,
   padNumber,
   TemplateType,
-} from '../templates/index.js';
+} from "../templates/index.js";
 import {
   simpleTierToGranular,
   parseDuration,
   DifficultyLevel,
   TaskDuration,
   DetailLevel,
-} from '../types.js';
+} from "../types.js";
 
 interface AddTaskArgs {
   workspaceRoot: string;
@@ -39,11 +39,11 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
   // Load config
   const config = await loadConfig(workspaceRoot);
   if (!config) {
-    return '❌ Workflow not initialized. Run init-workflow first.';
+    return "❌ Workflow not initialized. Run init-workflow first.";
   }
 
   // Find cycle directory
-  const cyclesDir = join(workspaceRoot, 'docs', 'cycles');
+  const cyclesDir = join(workspaceRoot, "docs", "cycles");
   const cycleDirs = await readdir(cyclesDir).catch(() => []);
   const cycleDir = cycleDirs.find((dir) => dir.startsWith(`${cycleNumber}-`));
 
@@ -63,14 +63,14 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
     difficulty = args.difficulty;
     taskDuration = args.duration;
     detailLevel = args.detailLevel;
-  } else if (config.sizing_mode === 'simple' && config.simple_tier) {
+  } else if (config.sizing_mode === "simple" && config.simple_tier) {
     // Use simple tier mapping
     const granular = simpleTierToGranular(config.simple_tier);
     difficulty = granular.difficulty;
     taskDuration = granular.duration;
     detailLevel = granular.detailLevel;
   } else if (
-    config.sizing_mode === 'granular' &&
+    config.sizing_mode === "granular" &&
     config.difficulty &&
     config.task_duration &&
     config.detail_level
@@ -80,7 +80,7 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
     taskDuration = config.task_duration;
     detailLevel = config.detail_level;
   } else {
-    return '❌ Invalid configuration. Please run init-workflow again.';
+    return "❌ Invalid configuration. Please run init-workflow again.";
   }
 
   // Determine next task number
@@ -94,17 +94,24 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
 
   // Create task file
   const template = await loadTemplate(TemplateType.TASK);
-  
+
   // Adjust content based on detail level
-  const getDetailedContent = (provided: string | undefined, defaultContent: string, detailLevel: DetailLevel): string => {
+  const getDetailedContent = (
+    provided: string | undefined,
+    defaultContent: string,
+    detailLevel: DetailLevel
+  ): string => {
     if (provided) return provided;
-    
-    if (detailLevel === 'high') {
-      return defaultContent + '\n\n_Detailed step-by-step instructions will guide you through this task._';
-    } else if (detailLevel === 'medium') {
+
+    if (detailLevel === "high") {
+      return (
+        defaultContent +
+        "\n\n_Detailed step-by-step instructions will guide you through this task._"
+      );
+    } else if (detailLevel === "medium") {
       return defaultContent;
     } else {
-      return '_High-level objective defined. Implementation details left to your expertise._';
+      return "_High-level objective defined. Implementation details left to your expertise._";
     }
   };
 
@@ -113,29 +120,44 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
     TASK_TITLE: taskTitle,
     TASK_DURATION: taskDuration,
     DIFFICULTY: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
-    PREREQUISITES: args.prerequisites || 'Basic development environment setup',
-    TASK_OVERVIEW: args.taskOverview || `This task focuses on ${taskTitle.toLowerCase()}.`,
+    PREREQUISITES: args.prerequisites || "Basic development environment setup",
+    TASK_OVERVIEW:
+      args.taskOverview || `This task focuses on ${taskTitle.toLowerCase()}.`,
     TASK_STEPS: getDetailedContent(
       args.taskSteps,
-      '1. Review the requirements\n2. Implement the solution\n3. Test your implementation',
+      "1. Review the requirements\n2. Implement the solution\n3. Test your implementation",
       detailLevel
     ),
-    ACCEPTANCE_CRITERIA: args.acceptanceCriteria || `- [ ] ${taskTitle} is implemented\n- [ ] Tests pass\n- [ ] Code is documented`,
-    TESTING_INSTRUCTIONS: args.testingInstructions || '1. Run the application\n2. Verify functionality\n3. Check for errors',
-    TIPS: args.tips || '- Break down complex problems into smaller steps\n- Test incrementally\n- Commit your work frequently',
-    TROUBLESHOOTING: args.troubleshooting || '_Common issues and solutions will be documented here as they arise._',
-    NEXT_STEPS: args.nextSteps || 'continue building on this foundation',
+    ACCEPTANCE_CRITERIA:
+      args.acceptanceCriteria ||
+      `- [ ] ${taskTitle} is implemented\n- [ ] Tests pass\n- [ ] Code is documented`,
+    TESTING_INSTRUCTIONS:
+      args.testingInstructions ||
+      "1. Run the application\n2. Verify functionality\n3. Check for errors",
+    TIPS:
+      args.tips ||
+      "- Break down complex problems into smaller steps\n- Test incrementally\n- Commit your work frequently",
+    TROUBLESHOOTING:
+      args.troubleshooting ||
+      "_Common issues and solutions will be documented here as they arise._",
+    NEXT_STEPS: args.nextSteps || "continue building on this foundation",
   });
 
   const taskFileName = `${taskNumber}-${taskTitle
     .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')}.md`;
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")}.md`;
   const taskFilePath = join(cyclePath, taskFileName);
   await writeFile(taskFilePath, taskContent);
 
   // Update cycle README with new task
-  await updateCycleReadmeWithTask(cyclePath, taskNumber, taskTitle, taskFileName, parseDuration(taskDuration));
+  await updateCycleReadmeWithTask(
+    cyclePath,
+    taskNumber,
+    taskTitle,
+    taskFileName,
+    parseDuration(taskDuration)
+  );
 
   return `✅ Task ${taskNumber} created successfully!
 
@@ -162,26 +184,32 @@ async function updateCycleReadmeWithTask(
   taskFileName: string,
   duration: number
 ): Promise<void> {
-  const readmePath = join(cyclePath, 'README.md');
-  let content = await readFile(readmePath, 'utf-8');
+  const readmePath = join(cyclePath, "README.md");
+  let content = await readFile(readmePath, "utf-8");
 
   // Find and update task list
-  const taskListMarker = '## Tasks (';
+  const taskListMarker = "## Tasks (";
   const taskListIndex = content.indexOf(taskListMarker);
-  
+
   if (taskListIndex !== -1) {
     // Update task count
     const taskCountMatch = content.match(/## Tasks \((\d+) total\)/);
     const currentCount = taskCountMatch ? parseInt(taskCountMatch[1]) : 0;
     const newCount = currentCount + 1;
-    content = content.replace(/## Tasks \(\d+ total\)/, `## Tasks (${newCount} total)`);
+    content = content.replace(
+      /## Tasks \(\d+ total\)/,
+      `## Tasks (${newCount} total)`
+    );
 
     // Find where to insert the new task
-    const progressTrackerIndex = content.indexOf('## Progress Tracker');
-    const taskListSection = content.substring(taskListIndex, progressTrackerIndex);
-    
+    const progressTrackerIndex = content.indexOf("## Progress Tracker");
+    const taskListSection = content.substring(
+      taskListIndex,
+      progressTrackerIndex
+    );
+
     // Check if there's already task content
-    if (taskListSection.includes('_No tasks yet')) {
+    if (taskListSection.includes("_No tasks yet")) {
       // Replace the placeholder
       content = content.replace(
         /_No tasks yet\. Use add-task to create tasks\._/,
@@ -191,11 +219,16 @@ async function updateCycleReadmeWithTask(
       // Add to existing list
       const insertPosition = progressTrackerIndex;
       const newTask = `- [ ] **[${taskNumber}](./${taskFileName})** - ${taskTitle} (${duration}h)\n\n`;
-      content = content.substring(0, insertPosition) + newTask + content.substring(insertPosition);
+      content =
+        content.substring(0, insertPosition) +
+        newTask +
+        content.substring(insertPosition);
     }
 
     // Update estimated hours
-    const estimatedHoursMatch = content.match(/\*\*Estimated Hours\*\*: (\d+(?:\.\d+)?) hours/);
+    const estimatedHoursMatch = content.match(
+      /\*\*Estimated Hours\*\*: (\d+(?:\.\d+)?) hours/
+    );
     if (estimatedHoursMatch) {
       const currentHours = parseFloat(estimatedHoursMatch[1]);
       const newHours = currentHours + duration;
@@ -214,4 +247,3 @@ async function updateCycleReadmeWithTask(
     await writeFile(readmePath, content);
   }
 }
-

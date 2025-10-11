@@ -1,8 +1,12 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import { loadTemplate, replaceTemplateVars, TemplateType } from '../templates/index.js';
+import { exec } from "child_process";
+import { promisify } from "util";
+import { readFile } from "fs/promises";
+import { join } from "path";
+import {
+  loadTemplate,
+  replaceTemplateVars,
+  TemplateType,
+} from "../templates/index.js";
 
 const execAsync = promisify(exec);
 
@@ -32,7 +36,7 @@ export async function commitTask(args: CommitTaskArgs): Promise<string> {
 
   try {
     // Stage all changes
-    await execAsync('git add .', { cwd: workspaceRoot });
+    await execAsync("git add .", { cwd: workspaceRoot });
 
     // Create commit message
     const commitMessage = body
@@ -55,7 +59,7 @@ Next steps:
     if (error instanceof Error) {
       return `❌ Commit failed: ${error.message}`;
     }
-    return '❌ Commit failed with unknown error';
+    return "❌ Commit failed with unknown error";
   }
 }
 
@@ -64,13 +68,16 @@ export async function pushBranch(args: PushBranchArgs): Promise<string> {
 
   try {
     // Get current branch
-    const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
-      cwd: workspaceRoot,
-    });
+    const { stdout: branch } = await execAsync(
+      "git rev-parse --abbrev-ref HEAD",
+      {
+        cwd: workspaceRoot,
+      }
+    );
     const branchName = branch.trim();
 
-    if (branchName === 'main' || branchName === 'master') {
-      return '❌ Cannot push directly to main/master branch. Create a feature branch first.';
+    if (branchName === "main" || branchName === "master") {
+      return "❌ Cannot push directly to main/master branch. Create a feature branch first.";
     }
 
     // Push branch
@@ -86,28 +93,41 @@ Next steps:
     if (error instanceof Error) {
       return `❌ Push failed: ${error.message}`;
     }
-    return '❌ Push failed with unknown error';
+    return "❌ Push failed with unknown error";
   }
 }
 
 export async function createPR(args: CreatePRArgs): Promise<string> {
-  const { workspaceRoot, cycleNumber, taskNumber, taskTitle, changes, acceptanceCriteria, notes } = args;
+  const {
+    workspaceRoot,
+    cycleNumber,
+    taskNumber,
+    taskTitle,
+    changes,
+    acceptanceCriteria,
+    notes,
+  } = args;
 
   try {
     // Get current branch
-    const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
-      cwd: workspaceRoot,
-    });
+    const { stdout: branch } = await execAsync(
+      "git rev-parse --abbrev-ref HEAD",
+      {
+        cwd: workspaceRoot,
+      }
+    );
     const branchName = branch.trim();
 
     // Load PR template
     const template = await loadTemplate(TemplateType.PR);
-    
+
     // Format changes
-    const changesText = changes.map(c => `- ${c}`).join('\n');
-    
+    const changesText = changes.map((c) => `- ${c}`).join("\n");
+
     // Format acceptance criteria
-    const acceptanceCriteriaText = acceptanceCriteria.map(c => `- [ ] ${c}`).join('\n');
+    const acceptanceCriteriaText = acceptanceCriteria
+      .map((c) => `- [ ] ${c}`)
+      .join("\n");
 
     const prBody = replaceTemplateVars(template, {
       TASK_NUMBER: taskNumber,
@@ -133,10 +153,13 @@ export async function createPR(args: CreatePRArgs): Promise<string> {
     // Create PR using GitHub CLI if available
     try {
       const prTitle = `feat(cycle-${cycleNumber}): ${taskTitle}`;
-      
+
       // Try to create PR with gh CLI
       await execAsync(
-        `gh pr create --title "${prTitle}" --body "${finalPRBody.replace(/"/g, '\\"')}" --base main`,
+        `gh pr create --title "${prTitle}" --body "${finalPRBody.replace(
+          /"/g,
+          '\\"'
+        )}" --base main`,
         { cwd: workspaceRoot }
       );
 
@@ -172,7 +195,7 @@ After creating the PR, the task will be marked as complete automatically.`;
     if (error instanceof Error) {
       return `❌ PR creation failed: ${error.message}`;
     }
-    return '❌ PR creation failed with unknown error';
+    return "❌ PR creation failed with unknown error";
   }
 }
 
@@ -183,30 +206,30 @@ async function markTaskComplete(
 ): Promise<void> {
   try {
     // Find cycle directory
-    const cyclesDir = join(workspaceRoot, 'docs', 'cycles');
+    const cyclesDir = join(workspaceRoot, "docs", "cycles");
     const { stdout: cycleDirs } = await execAsync(`ls ${cyclesDir}`);
     const cycleDir = cycleDirs
-      .split('\n')
+      .split("\n")
       .find((dir) => dir.startsWith(`${cycleNumber}-`));
 
     if (!cycleDir) return;
 
-    const readmePath = join(cyclesDir, cycleDir, 'README.md');
-    let content = await readFile(readmePath, 'utf-8');
+    const readmePath = join(cyclesDir, cycleDir, "README.md");
+    let content = await readFile(readmePath, "utf-8");
 
     // Mark task as complete
-    const taskPattern = new RegExp(`- \\[ \\] \\*\\*\\[${taskNumber}\\]`, 'g');
+    const taskPattern = new RegExp(`- \\[ \\] \\*\\*\\[${taskNumber}\\]`, "g");
     content = content.replace(taskPattern, `- [x] **[${taskNumber}]`);
 
     // Update progress
     const taskMatches = content.match(/- \[[x ]\]/g);
     if (taskMatches) {
       const total = taskMatches.length;
-      const completed = taskMatches.filter((m) => m === '- [x]').length;
+      const completed = taskMatches.filter((m) => m === "- [x]").length;
       const percentage = Math.round((completed / total) * 100);
       const filled = Math.round((completed / total) * 20);
       const empty = 20 - filled;
-      const bar = '█'.repeat(filled) + '░'.repeat(empty);
+      const bar = "█".repeat(filled) + "░".repeat(empty);
 
       content = content.replace(
         /\*\*Completed\*\*: \d+\/\d+ tasks \(\d+%\)/,
@@ -216,11 +239,10 @@ async function markTaskComplete(
     }
 
     // Write updated content
-    const { writeFile } = await import('fs/promises');
+    const { writeFile } = await import("fs/promises");
     await writeFile(readmePath, content);
   } catch (error) {
     // Silently fail - this is a nice-to-have
-    console.error('Failed to mark task complete:', error);
+    console.error("Failed to mark task complete:", error);
   }
 }
-

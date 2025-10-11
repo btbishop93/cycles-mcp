@@ -67,16 +67,19 @@ AI: *calls init-workflow with granular settings*
 **Available Options:**
 
 - **Simple Mode**: Pick a tier
+
   - `junior` - 1h tasks, high detail (step-by-step)
   - `mid` - 2h tasks, medium detail (balanced)
   - `senior` - 4h tasks, low detail (high-level objectives)
 
 - **Granular Mode**: Specify each:
+
   - Difficulty: `junior`, `mid`, `senior`
   - Duration: `0.5h`, `1h`, `2h`, `4h`, `8h`
   - Detail: `high`, `medium`, `low`
 
 - **Cycle Duration**:
+
   - 1-3 weeks
   - 1-2 months
   - 1 quarter (3 months)
@@ -93,7 +96,7 @@ AI: *calls create-cycle*
 With details:
 
 ```
-User: Create cycle "API Development" with goal "Build REST API" 
+User: Create cycle "API Development" with goal "Build REST API"
 AI: *calls create-cycle with description and goal*
 ```
 
@@ -157,25 +160,25 @@ AI: *calls update-progress with session details*
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `init-workflow` | Initialize cycle workflow in a repository |
-| `create-cycle` | Create a new development cycle |
-| `add-task` | Add a task to a cycle |
-| `commit-task` | Commit changes with conventional commit format |
-| `push-branch` | Push current branch to remote |
-| `create-pr` | Create pull request and mark task complete |
-| `update-progress` | Update cycle progress and log sessions |
+| Tool              | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `init-workflow`   | Initialize cycle workflow in a repository      |
+| `create-cycle`    | Create a new development cycle                 |
+| `add-task`        | Add a task to a cycle                          |
+| `commit-task`     | Commit changes with conventional commit format |
+| `push-branch`     | Push current branch to remote                  |
+| `create-pr`       | Create pull request and mark task complete     |
+| `update-progress` | Update cycle progress and log sessions         |
 
 ## Available Resources
 
-| Resource | Description |
-|----------|-------------|
-| `template://workflow` | WORKFLOW.md template |
-| `template://cycles` | cycles.md template |
+| Resource                  | Description           |
+| ------------------------- | --------------------- |
+| `template://workflow`     | WORKFLOW.md template  |
+| `template://cycles`       | cycles.md template    |
 | `template://cycle-readme` | Cycle README template |
-| `template://task` | Task file template |
-| `template://pr` | Pull request template |
+| `template://task`         | Task file template    |
+| `template://pr`           | Pull request template |
 
 ## Workflow Overview
 
@@ -396,4 +399,3 @@ Issues and PRs welcome! This is a hobby project but maintained actively.
 ## Credits
 
 Created for managing development cycles across multiple repositories. Inspired by agile sprints, but optimized for solo developers and small teams.
-

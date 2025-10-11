@@ -1,13 +1,13 @@
-import { writeFile, mkdir, readdir } from 'fs/promises';
-import { join } from 'path';
-import { loadConfig } from '../config.js';
+import { writeFile, mkdir, readdir } from "fs/promises";
+import { join } from "path";
+import { loadConfig } from "../config.js";
 import {
   loadTemplate,
   replaceTemplateVars,
   padNumber,
   TemplateType,
-} from '../templates/index.js';
-import { formatCycleDuration } from '../types.js';
+} from "../templates/index.js";
+import { formatCycleDuration } from "../types.js";
 
 interface CreateCycleArgs {
   workspaceRoot: string;
@@ -24,24 +24,25 @@ export async function createCycle(args: CreateCycleArgs): Promise<string> {
   // Load config
   const config = await loadConfig(workspaceRoot);
   if (!config) {
-    return '❌ Workflow not initialized. Run init-workflow first.';
+    return "❌ Workflow not initialized. Run init-workflow first.";
   }
 
   // Determine next cycle number
-  const cyclesDir = join(workspaceRoot, 'docs', 'cycles');
+  const cyclesDir = join(workspaceRoot, "docs", "cycles");
   const existing = await readdir(cyclesDir).catch(() => []);
   const cycleNumbers = existing
     .filter((dir) => /^\d{2}-/.test(dir))
     .map((dir) => parseInt(dir.substring(0, 2)))
     .filter((n) => !isNaN(n));
-  const nextCycleNum = cycleNumbers.length > 0 ? Math.max(...cycleNumbers) + 1 : 1;
+  const nextCycleNum =
+    cycleNumbers.length > 0 ? Math.max(...cycleNumbers) + 1 : 1;
   const cycleNumber = padNumber(nextCycleNum, 2);
 
   // Create cycle directory
   const cycleDirName = `${cycleNumber}-${cycleName
     .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')}`;
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")}`;
   const cyclePath = join(cyclesDir, cycleDirName);
   await mkdir(cyclePath, { recursive: true });
 
@@ -53,10 +54,12 @@ export async function createCycle(args: CreateCycleArgs): Promise<string> {
     CYCLE_DURATION: formatCycleDuration(config.cycle_duration),
     ESTIMATED_HOURS: config.hours_per_cycle.toString(),
     CYCLE_DESCRIPTION:
-      args.cycleDescription || 'This cycle focuses on ' + cycleName.toLowerCase() + '.',
-    CYCLE_GOAL: args.cycleGoal || 'Complete all tasks in this cycle successfully.',
-    TASK_COUNT: '0',
-    TASK_LIST: '_No tasks yet. Use add-task to create tasks._',
+      args.cycleDescription ||
+      "This cycle focuses on " + cycleName.toLowerCase() + ".",
+    CYCLE_GOAL:
+      args.cycleGoal || "Complete all tasks in this cycle successfully.",
+    TASK_COUNT: "0",
+    TASK_LIST: "_No tasks yet. Use add-task to create tasks._",
     SUCCESS_CRITERIA:
       args.successCriteria ||
       `- ✅ All tasks completed
@@ -70,7 +73,7 @@ export async function createCycle(args: CreateCycleArgs): Promise<string> {
     NEXT_CYCLE: padNumber(nextCycleNum + 1, 2),
   });
 
-  const readmePath = join(cyclePath, 'README.md');
+  const readmePath = join(cyclePath, "README.md");
   await writeFile(readmePath, cycleContent);
 
   return `✅ Cycle ${cycleNumber} created successfully!
@@ -88,4 +91,3 @@ Next steps:
 2. Use add-task to create tasks for this cycle
 3. Ensure total task hours ≤ ${config.hours_per_cycle} hours`;
 }
-
