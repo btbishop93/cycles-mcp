@@ -1,8 +1,16 @@
 # Task {{TASK_NUMBER}}: {{TASK_TITLE}}
 
 **Estimated Time**: {{TASK_DURATION}}  
-**Difficulty**: {{DIFFICULTY}}  
-**Prerequisites**: {{PREREQUISITES}}
+**Difficulty**: {{DIFFICULTY}}
+
+## Prerequisites & Dependencies
+
+**Must complete first:** {{DEPENDENCIES}}  
+**May conflict with:** {{CONFLICTS}}  
+**Parallelization:** {{PARALLELIZATION_STATUS}}
+
+**Files/Areas This Task Modifies:**
+{{MODIFIED_AREAS}}
 
 ## Overview
 

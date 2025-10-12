@@ -9,6 +9,8 @@ A Model Context Protocol (MCP) server for managing development cycles, tasks, an
 - 🎯 **Flexible sizing** - Choose between simple tiers or granular control
 - 🔧 **Git integration** - Commit, push, and create PRs directly
 - 📊 **Progress tracking** - Automatic progress bars and session logs
+- 🔀 **Dependency tracking** - Auto-group tasks for parallel execution
+- 👥 **Team coordination** - See which tasks can be done simultaneously
 - 📄 **Templates** - Consistent documentation across all projects
 - 🤖 **AI-friendly** - Works seamlessly with Cursor and other MCP clients
 
@@ -50,17 +52,37 @@ Restart Cursor to load the MCP server.
 
 ### Initialize Workflow in a New Repo
 
-**Simple Mode** (recommended for most users):
+**The AI will prompt you for all required configuration when you initialize:**
 
 ```
 User: Initialize the cycles workflow for this project
-AI: *calls init-workflow with simple mode, mid tier*
+AI: I'll help you set up the workflow. First, let me ask a few questions:
+    - What sizing mode do you prefer? (simple/granular)
+    - [If simple] What skill tier? (junior/mid/senior)
+    - [If granular] What difficulty/duration/detail level?
+    - How long should each cycle be? (weeks/months/quarters)
+    - How many hours do you have per cycle?
+AI: *calls init-workflow with your configuration*
+```
+
+**Important:** The AI will ask for configuration before creating the workflow. You must provide:
+
+- Sizing mode (simple or granular)
+- Skill level/tier
+- Cycle duration and timeframe
+- Hours available per cycle
+
+**Simple Mode** (recommended for most users):
+
+```
+User: Initialize workflow with simple mode, mid tier, 2 weeks, 16 hours
+AI: *calls init-workflow with your settings*
 ```
 
 **Granular Mode** (for advanced users):
 
 ```
-User: Initialize workflow with 8h tasks, senior difficulty, low detail level
+User: Initialize workflow with 8h tasks, senior difficulty, low detail level, 1 month, 40 hours
 AI: *calls init-workflow with granular settings*
 ```
 
@@ -102,17 +124,37 @@ AI: *calls create-cycle with description and goal*
 
 ### Add Tasks to a Cycle
 
+**Basic task:**
+
 ```
 User: Add task "Setup database schema" to cycle 01
 AI: *calls add-task with default settings from config*
 ```
 
-Override task settings:
+**With dependencies (for parallelization):**
 
 ```
-User: Add task "Implement OAuth" to cycle 01 with 8h duration and senior difficulty
-AI: *calls add-task with overrides*
+User: Add task "User authentication" to cycle 01, depends on Task 001
+AI: *calls add-task with dependencies, automatically groups tasks*
 ```
+
+**With full metadata:**
+
+```
+User: Add task "Implement OAuth" to cycle 01:
+- Depends on: Task 001, Task 002
+- Conflicts with: None
+- Modifies: src/auth/, database users table
+- Duration: 8h, senior difficulty
+AI: *calls add-task with full metadata*
+```
+
+**Why specify dependencies?**
+
+- Tasks are automatically grouped into parallel execution groups
+- Teams can see which tasks can be done simultaneously
+- LLM agents can work on different groups without conflicts
+- Cycle README shows clear visual grouping: 🟢 Group 1 (start now), 🟡 Group 2 (after Group 1), etc.
 
 ### Working on a Task
 
@@ -184,9 +226,17 @@ AI: *calls update-progress with session details*
 
 ### 1. Initialize (Once Per Repo)
 
+**IMPORTANT:** This must be done first! All other tools validate that initialization is complete.
+
 ```
-init-workflow → creates docs/, WORKFLOW.md, cycles.md, .cycles-config.json
+init-workflow → creates:
+  - .cycles-config.json (configuration)
+  - WORKFLOW.md (workflow guide)
+  - docs/cycles.md (cycles tracker)
+  - docs/cycles/ (cycles directory)
 ```
+
+Without proper initialization, other tools will return an error listing missing files.
 
 ### 2. Create Cycle
 
@@ -200,7 +250,18 @@ create-cycle → creates docs/cycles/01-cycle-name/README.md
 add-task → creates docs/cycles/01-cycle-name/001-task-name.md
 add-task → creates docs/cycles/01-cycle-name/002-task-name.md
 ...
+→ Automatically updates cycle README with task dependencies
+→ Groups tasks for parallel execution
 ```
+
+**Task Dependency Grouping:**
+
+- Tasks with no dependencies → 🟢 Group 1 (start immediately)
+- Tasks depending on Group 1 → 🟡 Group 2 (parallel after Group 1)
+- Tasks depending on Group 2 → 🟡 Group 3 (parallel after Group 2)
+- Final integration tasks → 🔴 Final Group
+
+Tasks within the same group can be worked on simultaneously!
 
 ### 4. Work on Tasks
 
@@ -305,6 +366,47 @@ User: Add 8 small bug fix tasks
 AI: Creates detailed, 1-hour tasks
 ```
 
+### Example 4: Team with Parallel Work
+
+```
+User: Initialize workflow for team collaboration
+AI: Sets up structure
+
+User: Create cycle "E-commerce Platform"
+AI: Creates cycle 01
+
+User: Add tasks:
+1. "Setup database" - no dependencies
+2. "Create product API" - depends on Task 001
+3. "Design UI components" - no dependencies
+4. "Build shopping cart" - depends on Task 002, 003
+5. "Payment integration" - depends on Task 004
+
+AI: Creates tasks and groups them automatically in cycle README:
+
+🟢 Group 1 (Start Immediately):
+- [ ] 001 - Setup database
+- [ ] 003 - Design UI components
+
+🟡 Group 2 (After Group 1):
+- [ ] 002 - Create product API (needs 001)
+
+🟡 Group 3 (After Group 2):
+- [ ] 004 - Build shopping cart (needs 002, 003)
+
+🔴 Group 4 (Final Tasks):
+- [ ] 005 - Payment integration (needs 004)
+
+> Parallelization tip: Tasks within the same group can be worked on simultaneously
+```
+
+**Result:**
+
+- Two devs can work on tasks 001 and 003 simultaneously
+- Once done, one dev starts 002 while another works on docs
+- Tasks 004 becomes available after 002 and 003 complete
+- Clear visibility for the whole team!
+
 ## Git Workflow Integration
 
 The MCP server follows these conventions:
@@ -365,9 +467,11 @@ bun run build
 ### Tools Not Working
 
 1. Ensure `init-workflow` was run first
-2. Check that `.cycles-config.json` exists in workspace root
-3. Verify you're in the correct directory
-4. Check file permissions
+2. All tools will validate that the workflow is properly initialized before running
+3. Required files: `.cycles-config.json`, `WORKFLOW.md`, `docs/cycles.md`, `docs/cycles/`
+4. If you see "Missing files" error, run `init-workflow` to set up the complete structure
+5. Verify you're in the correct directory
+6. Check file permissions
 
 ### PR Creation Fails
 

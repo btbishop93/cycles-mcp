@@ -24,6 +24,16 @@ export async function updateProgress(
   } = args;
 
   try {
+    // Validate workflow is initialized
+    const { validateWorkflowInitialized } = await import("../config.js");
+    const validation = await validateWorkflowInitialized(workspaceRoot);
+    if (!validation.valid) {
+      return `❌ Workflow not properly initialized. Missing files:
+${validation.missing.map((f) => `  - ${f}`).join("\n")}
+
+Please run init-workflow first to set up the complete workflow structure.`;
+    }
+
     // Find cycle directory
     const cyclesDir = join(workspaceRoot, "docs", "cycles");
     const cycleDirs = await readdir(cyclesDir);

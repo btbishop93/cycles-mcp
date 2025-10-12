@@ -16,6 +16,10 @@
 
 {{TASK_LIST}}
 
+## Task Dependencies
+
+{{TASK_DEPENDENCIES}}
+
 ## Progress Tracker
 
 **Completed**: 0/{{TASK_COUNT}} tasks (0%)

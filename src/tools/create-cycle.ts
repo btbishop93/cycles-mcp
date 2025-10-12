@@ -21,10 +21,20 @@ interface CreateCycleArgs {
 export async function createCycle(args: CreateCycleArgs): Promise<string> {
   const { workspaceRoot, cycleName } = args;
 
+  // Validate workflow is initialized
+  const { validateWorkflowInitialized } = await import("../config.js");
+  const validation = await validateWorkflowInitialized(workspaceRoot);
+  if (!validation.valid) {
+    return `❌ Workflow not properly initialized. Missing files:
+${validation.missing.map((f) => `  - ${f}`).join("\n")}
+
+Please run init-workflow first to set up the complete workflow structure.`;
+  }
+
   // Load config
   const config = await loadConfig(workspaceRoot);
   if (!config) {
-    return "❌ Workflow not initialized. Run init-workflow first.";
+    return "❌ Configuration file is invalid or corrupt. Please run init-workflow again.";
   }
 
   // Determine next cycle number
@@ -60,6 +70,8 @@ export async function createCycle(args: CreateCycleArgs): Promise<string> {
       args.cycleGoal || "Complete all tasks in this cycle successfully.",
     TASK_COUNT: "0",
     TASK_LIST: "_No tasks yet. Use add-task to create tasks._",
+    TASK_DEPENDENCIES:
+      "_Task dependencies will be shown here as tasks are added. Tasks will be grouped by parallel execution possibilities._",
     SUCCESS_CRITERIA:
       args.successCriteria ||
       `- ✅ All tasks completed

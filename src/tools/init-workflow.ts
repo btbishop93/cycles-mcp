@@ -36,28 +36,56 @@ export async function initWorkflow(args: InitWorkflowArgs): Promise<string> {
     return "Workflow already initialized. Use update-config to modify settings.";
   }
 
+  // Validate required parameters
+  if (!args.sizing_mode) {
+    return "❌ Error: sizing_mode is required. Please specify 'simple' or 'granular'.";
+  }
+
+  if (args.sizing_mode === "simple" && !args.simple_tier) {
+    return "❌ Error: simple_tier is required when sizing_mode is 'simple'. Please specify 'junior', 'mid', or 'senior'.";
+  }
+
+  if (args.sizing_mode === "granular") {
+    if (!args.difficulty) {
+      return "❌ Error: difficulty is required when sizing_mode is 'granular'.";
+    }
+    if (!args.task_duration) {
+      return "❌ Error: task_duration is required when sizing_mode is 'granular'.";
+    }
+    if (!args.detail_level) {
+      return "❌ Error: detail_level is required when sizing_mode is 'granular'.";
+    }
+  }
+
+  if (!args.cycle_duration_unit) {
+    return "❌ Error: cycle_duration_unit is required. Please specify 'weeks', 'months', or 'quarters'.";
+  }
+
+  if (!args.cycle_duration_value) {
+    return "❌ Error: cycle_duration_value is required. Please specify how many weeks/months/quarters per cycle.";
+  }
+
+  if (!args.hours_per_cycle) {
+    return "❌ Error: hours_per_cycle is required. Please specify how many hours are available per cycle.";
+  }
+
   // Ensure directory structure
   await ensureDocsStructure(workspaceRoot);
 
   // Create config
-  let cycle_duration;
-  if (args.cycle_duration_unit) {
-    cycle_duration = {
-      unit: args.cycle_duration_unit,
-      value: args.cycle_duration_value || 1,
-    } as any;
-  } else {
-    cycle_duration = { unit: "weeks" as const, value: 1 };
-  }
+  const cycle_duration = {
+    unit: args.cycle_duration_unit,
+    value: args.cycle_duration_value,
+  } as any;
 
   const config: CycleConfig = {
-    sizing_mode: args.sizing_mode || "simple",
-    simple_tier: args.simple_tier || "mid",
+    sizing_mode: args.sizing_mode,
+    simple_tier: args.simple_tier,
     difficulty: args.difficulty,
     task_duration: args.task_duration,
     detail_level: args.detail_level,
     cycle_duration,
-    hours_per_cycle: args.hours_per_cycle || 8,
+    hours_per_cycle: args.hours_per_cycle,
   };
 
   await saveConfig(workspaceRoot, config);

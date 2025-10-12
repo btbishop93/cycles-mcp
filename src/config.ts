@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFile, writeFile, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { CycleConfig, CycleConfigSchema } from "./types.js";
 
@@ -15,6 +15,45 @@ export async function loadConfig(
   } catch (error) {
     return null;
   }
+}
+
+export async function validateWorkflowInitialized(
+  workspaceRoot: string
+): Promise<{ valid: boolean; missing: string[] }> {
+  const missing: string[] = [];
+
+  // Check config file
+  try {
+    await access(join(workspaceRoot, CONFIG_FILENAME));
+  } catch {
+    missing.push(".cycles-config.json");
+  }
+
+  // Check WORKFLOW.md
+  try {
+    await access(join(workspaceRoot, "WORKFLOW.md"));
+  } catch {
+    missing.push("WORKFLOW.md");
+  }
+
+  // Check docs/cycles.md
+  try {
+    await access(join(workspaceRoot, "docs", "cycles.md"));
+  } catch {
+    missing.push("docs/cycles.md");
+  }
+
+  // Check docs/cycles/ directory
+  try {
+    await access(join(workspaceRoot, "docs", "cycles"));
+  } catch {
+    missing.push("docs/cycles/ directory");
+  }
+
+  return {
+    valid: missing.length === 0,
+    missing,
+  };
 }
 
 export async function saveConfig(

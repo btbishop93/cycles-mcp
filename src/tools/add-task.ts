@@ -27,6 +27,10 @@ interface AddTaskArgs {
   troubleshooting?: string;
   nextSteps?: string;
   prerequisites?: string;
+  // Dependency tracking
+  dependencies?: string; // e.g., "Task 001, Task 002" or "None"
+  conflicts?: string; // e.g., "Task 003 (both modify auth)" or "None"
+  modifiedAreas?: string; // e.g., "src/auth/, database schema"
   // Optional overrides
   difficulty?: DifficultyLevel;
   duration?: TaskDuration;
@@ -36,10 +40,20 @@ interface AddTaskArgs {
 export async function addTask(args: AddTaskArgs): Promise<string> {
   const { workspaceRoot, cycleNumber, taskTitle } = args;
 
+  // Validate workflow is initialized
+  const { validateWorkflowInitialized } = await import("../config.js");
+  const validation = await validateWorkflowInitialized(workspaceRoot);
+  if (!validation.valid) {
+    return `❌ Workflow not properly initialized. Missing files:
+${validation.missing.map((f) => `  - ${f}`).join("\n")}
+
+Please run init-workflow first to set up the complete workflow structure.`;
+  }
+
   // Load config
   const config = await loadConfig(workspaceRoot);
   if (!config) {
-    return "❌ Workflow not initialized. Run init-workflow first.";
+    return "❌ Configuration file is invalid or corrupt. Please run init-workflow again.";
   }
 
   // Find cycle directory
@@ -115,12 +129,37 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
     }
   };
 
+  // Determine parallelization status
+  const dependencies = args.dependencies || "None (can start immediately)";
+  const conflicts = args.conflicts || "None";
+  const hasDependencies = dependencies !== "None (can start immediately)";
+  const hasConflicts = conflicts !== "None";
+
+  let parallelizationStatus: string;
+  if (!hasDependencies && !hasConflicts) {
+    parallelizationStatus = "✅ Safe to run in parallel with other tasks";
+  } else if (hasDependencies && !hasConflicts) {
+    parallelizationStatus =
+      "⏳ Must wait for dependencies, but can run in parallel with tasks in same group";
+  } else if (!hasDependencies && hasConflicts) {
+    parallelizationStatus =
+      "⚠️ Can start immediately but may conflict during merge";
+  } else {
+    parallelizationStatus =
+      "⚠️ Must wait for dependencies and may conflict during merge";
+  }
+
   const taskContent = replaceTemplateVars(template, {
     TASK_NUMBER: taskNumber,
     TASK_TITLE: taskTitle,
     TASK_DURATION: taskDuration,
     DIFFICULTY: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
-    PREREQUISITES: args.prerequisites || "Basic development environment setup",
+    DEPENDENCIES: dependencies,
+    CONFLICTS: conflicts,
+    PARALLELIZATION_STATUS: parallelizationStatus,
+    MODIFIED_AREAS:
+      args.modifiedAreas ||
+      "_To be determined during implementation. Update this section as you work._",
     TASK_OVERVIEW:
       args.taskOverview || `This task focuses on ${taskTitle.toLowerCase()}.`,
     TASK_STEPS: getDetailedContent(
@@ -156,7 +195,8 @@ export async function addTask(args: AddTaskArgs): Promise<string> {
     taskNumber,
     taskTitle,
     taskFileName,
-    parseDuration(taskDuration)
+    parseDuration(taskDuration),
+    dependencies
   );
 
   return `✅ Task ${taskNumber} created successfully!
@@ -182,7 +222,8 @@ async function updateCycleReadmeWithTask(
   taskNumber: string,
   taskTitle: string,
   taskFileName: string,
-  duration: number
+  duration: number,
+  dependencies: string
 ): Promise<void> {
   const readmePath = join(cyclePath, "README.md");
   let content = await readFile(readmePath, "utf-8");
@@ -244,6 +285,140 @@ async function updateCycleReadmeWithTask(
       `**Completed**: 0/${newCount} tasks`
     );
 
+    // Regenerate task dependencies section
+    await regenerateTaskDependencies(cyclePath, content, readmePath);
+  }
+}
+
+async function regenerateTaskDependencies(
+  cyclePath: string,
+  content: string,
+  readmePath: string
+): Promise<void> {
+  // Read all task files to extract dependencies
+  const taskFiles = await readdir(cyclePath);
+  const taskMdFiles = taskFiles.filter((f) => /^\d{3}-.*\.md$/.test(f)).sort();
+
+  interface TaskInfo {
+    number: string;
+    title: string;
+    dependencies: string[];
+    fileName: string;
+  }
+
+  const tasks: TaskInfo[] = [];
+
+  for (const file of taskMdFiles) {
+    const taskPath = join(cyclePath, file);
+    const taskContent = await readFile(taskPath, "utf-8");
+
+    // Extract task number and title
+    const titleMatch = taskContent.match(/# Task (\d{3}): (.+)/);
+    if (!titleMatch) continue;
+
+    const taskNumber = titleMatch[1];
+    const taskTitle = titleMatch[2];
+
+    // Extract dependencies
+    const depMatch = taskContent.match(/\*\*Must complete first:\*\* (.+)/);
+    const depString = depMatch
+      ? depMatch[1].trim()
+      : "None (can start immediately)";
+
+    // Parse dependency task numbers
+    const deps: string[] = [];
+    if (depString !== "None (can start immediately)") {
+      const taskRefs = depString.match(/Task \d{3}/g);
+      if (taskRefs) {
+        deps.push(...taskRefs.map((ref) => ref.replace("Task ", "")));
+      }
+    }
+
+    tasks.push({
+      number: taskNumber,
+      title: taskTitle,
+      dependencies: deps,
+      fileName: file,
+    });
+  }
+
+  // Group tasks by dependency level
+  const groups: TaskInfo[][] = [];
+  const processed = new Set<string>();
+
+  // Helper to check if all dependencies are processed
+  const canProcess = (task: TaskInfo): boolean => {
+    return task.dependencies.every((dep) => processed.has(dep));
+  };
+
+  // Group tasks level by level
+  while (processed.size < tasks.length) {
+    const currentGroup = tasks.filter(
+      (task) => !processed.has(task.number) && canProcess(task)
+    );
+
+    if (currentGroup.length === 0) {
+      // Handle circular dependencies or orphaned tasks
+      const remaining = tasks.filter((task) => !processed.has(task.number));
+      if (remaining.length > 0) {
+        groups.push(remaining);
+        remaining.forEach((task) => processed.add(task.number));
+      }
+      break;
+    }
+
+    groups.push(currentGroup);
+    currentGroup.forEach((task) => processed.add(task.number));
+  }
+
+  // Generate dependency section
+  let dependencySection = "";
+
+  if (groups.length === 0) {
+    dependencySection =
+      "_Task dependencies will be shown here as tasks are added. Tasks will be grouped by parallel execution possibilities._";
+  } else {
+    groups.forEach((group, index) => {
+      const groupNumber = index + 1;
+      const emoji =
+        index === 0 ? "🟢" : index === groups.length - 1 ? "🔴" : "🟡";
+      const label =
+        index === 0
+          ? "Start Immediately"
+          : index === groups.length - 1 && groups.length > 2
+          ? "Final Tasks"
+          : `After Group ${index}`;
+
+      dependencySection += `**${emoji} Group ${groupNumber}** (${label}):\n`;
+
+      group.forEach((task) => {
+        const depInfo =
+          task.dependencies.length > 0
+            ? ` - needs ${task.dependencies.join(", ")}`
+            : "";
+        dependencySection += `- [ ] [${task.number}](./${task.fileName}) - ${task.title}${depInfo}\n`;
+      });
+
+      dependencySection += "\n";
+    });
+
+    dependencySection += `> **Parallelization tip:** Tasks within the same group can be worked on simultaneously by different team members or agents. Tasks in different groups must be completed sequentially.`;
+  }
+
+  // Replace the task dependencies section
+  const depSectionStart = content.indexOf("## Task Dependencies");
+  const depSectionEnd = content.indexOf("## Progress Tracker");
+
+  if (depSectionStart !== -1 && depSectionEnd !== -1) {
+    const before = content.substring(0, depSectionStart);
+    const after = content.substring(depSectionEnd);
+
+    const updatedContent =
+      before + "## Task Dependencies\n\n" + dependencySection + "\n" + after;
+
+    await writeFile(readmePath, updatedContent);
+  } else {
+    // Fallback: just write the original content
     await writeFile(readmePath, content);
   }
 }

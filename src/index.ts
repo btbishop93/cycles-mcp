@@ -35,7 +35,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "init-workflow",
         description:
-          "Initialize the cycle-based workflow in a repository. Creates docs structure, WORKFLOW.md, cycles.md, and configuration file.",
+          "Initialize the cycle-based workflow in a repository. Creates docs structure, WORKFLOW.md, cycles.md, and configuration file. IMPORTANT: You MUST prompt the user for sizing_mode, cycle_duration_unit, cycle_duration_value, and hours_per_cycle before calling this tool. Do NOT use defaults without asking the user first.",
         inputSchema: {
           type: "object",
           properties: {
@@ -51,43 +51,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               enum: ["simple", "granular"],
               description:
-                "Task sizing mode: simple (pick tier) or granular (specify all options)",
+                "Task sizing mode: simple (pick tier) or granular (specify all options). REQUIRED: Ask user to choose.",
             },
             simple_tier: {
               type: "string",
               enum: ["junior", "mid", "senior"],
               description:
-                "Tier for simple mode (junior: 1h tasks with high detail, mid: 2h with medium detail, senior: 4h with low detail)",
+                "Tier for simple mode (junior: 1h tasks with high detail, mid: 2h with medium detail, senior: 4h with low detail). REQUIRED if sizing_mode is 'simple'.",
             },
             difficulty: {
               type: "string",
               enum: ["junior", "mid", "senior"],
-              description: "Difficulty level for granular mode",
+              description:
+                "Difficulty level for granular mode. REQUIRED if sizing_mode is 'granular'.",
             },
             task_duration: {
               type: "string",
               enum: ["0.5h", "1h", "2h", "4h", "8h"],
-              description: "Task duration for granular mode",
+              description:
+                "Task duration for granular mode. REQUIRED if sizing_mode is 'granular'.",
             },
             detail_level: {
               type: "string",
               enum: ["high", "medium", "low"],
               description:
-                "Detail level for granular mode (high: step-by-step, medium: balanced, low: high-level)",
+                "Detail level for granular mode (high: step-by-step, medium: balanced, low: high-level). REQUIRED if sizing_mode is 'granular'.",
             },
             cycle_duration_unit: {
               type: "string",
               enum: ["weeks", "months", "quarters"],
-              description: "Cycle duration unit",
+              description:
+                "Cycle duration unit. REQUIRED: Ask user how long each cycle should be.",
             },
             cycle_duration_value: {
               type: "number",
               description:
-                "Cycle duration value (1-3 for weeks, 1-2 for months, 1 for quarters)",
+                "Cycle duration value (1-3 for weeks, 1-2 for months, 1 for quarters). REQUIRED: Ask user for the specific value.",
             },
             hours_per_cycle: {
               type: "number",
-              description: "Total hours available per cycle",
+              description:
+                "Total hours available per cycle. REQUIRED: Ask user how many hours they have available per cycle.",
             },
           },
           required: ["workspaceRoot"],
@@ -131,7 +135,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "add-task",
-        description: "Add a new task to an existing cycle.",
+        description:
+          "Add a new task to an existing cycle. Automatically updates task dependencies section to show which tasks can be done in parallel.",
         inputSchema: {
           type: "object",
           properties: {
@@ -179,6 +184,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             prerequisites: {
               type: "string",
               description: "Prerequisites for this task (optional)",
+            },
+            dependencies: {
+              type: "string",
+              description:
+                'Task dependencies (e.g., "Task 001, Task 002" or "None"). Used to determine parallel execution groups.',
+            },
+            conflicts: {
+              type: "string",
+              description:
+                'Potential conflicts with other tasks (e.g., "Task 003 (both modify auth module)" or "None").',
+            },
+            modifiedAreas: {
+              type: "string",
+              description:
+                'Files/areas this task modifies (e.g., "src/auth/, database schema"). Helps identify merge conflicts.',
             },
             difficulty: {
               type: "string",

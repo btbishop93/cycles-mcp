@@ -35,6 +35,16 @@ export async function commitTask(args: CommitTaskArgs): Promise<string> {
   const { workspaceRoot, cycleNumber, message, body } = args;
 
   try {
+    // Validate workflow is initialized
+    const { validateWorkflowInitialized } = await import("../config.js");
+    const validation = await validateWorkflowInitialized(workspaceRoot);
+    if (!validation.valid) {
+      return `❌ Workflow not properly initialized. Missing files:
+${validation.missing.map((f) => `  - ${f}`).join("\n")}
+
+Please run init-workflow first to set up the complete workflow structure.`;
+    }
+
     // Stage all changes
     await execAsync("git add .", { cwd: workspaceRoot });
 
@@ -109,6 +119,16 @@ export async function createPR(args: CreatePRArgs): Promise<string> {
   } = args;
 
   try {
+    // Validate workflow is initialized
+    const { validateWorkflowInitialized } = await import("../config.js");
+    const validation = await validateWorkflowInitialized(workspaceRoot);
+    if (!validation.valid) {
+      return `❌ Workflow not properly initialized. Missing files:
+${validation.missing.map((f) => `  - ${f}`).join("\n")}
+
+Please run init-workflow first to set up the complete workflow structure.`;
+    }
+
     // Get current branch
     const { stdout: branch } = await execAsync(
       "git rev-parse --abbrev-ref HEAD",
