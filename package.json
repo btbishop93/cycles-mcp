@@ -9,7 +9,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "bun build src/index.ts --outdir dist --target node && cp -r src/templates dist/",
+    "build": "bun build src/index.ts --outdir dist --target node",
     "dev": "bun run src/index.ts",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist node_modules"
