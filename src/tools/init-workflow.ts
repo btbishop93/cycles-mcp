@@ -106,6 +106,13 @@ export async function initWorkflow(args: InitWorkflowArgs): Promise<string> {
   const cyclesPath = join(workspaceRoot, "docs", "cycles.md");
   await writeFile(cyclesPath, cyclesContent);
 
+  // Create PR template in .github directory
+  const prTemplate = await loadTemplate(TemplateType.PR);
+  const githubDir = join(workspaceRoot, ".github");
+  await mkdir(githubDir, { recursive: true });
+  const prTemplatePath = join(githubDir, "pull_request_template.md");
+  await writeFile(prTemplatePath, prTemplate);
+
   return `✅ Workflow initialized successfully!
 
 Created:
@@ -113,6 +120,7 @@ Created:
 - WORKFLOW.md (workflow guide)
 - docs/cycles.md (cycles tracker)
 - docs/cycles/ (cycles directory)
+- .github/pull_request_template.md (PR template)
 
 Configuration:
 - Sizing Mode: ${config.sizing_mode}

@@ -234,6 +234,7 @@ init-workflow → creates:
   - WORKFLOW.md (workflow guide)
   - docs/cycles.md (cycles tracker)
   - docs/cycles/ (cycles directory)
+  - .github/pull_request_template.md (PR template)
 ```
 
 Without proper initialization, other tools will return an error listing missing files.
@@ -468,7 +469,7 @@ bun run build
 
 1. Ensure `init-workflow` was run first
 2. All tools will validate that the workflow is properly initialized before running
-3. Required files: `.cycles-config.json`, `WORKFLOW.md`, `docs/cycles.md`, `docs/cycles/`
+3. Required files: `.cycles-config.json`, `WORKFLOW.md`, `docs/cycles.md`, `docs/cycles/`, `.github/pull_request_template.md`
 4. If you see "Missing files" error, run `init-workflow` to set up the complete structure
 5. Verify you're in the correct directory
 6. Check file permissions
