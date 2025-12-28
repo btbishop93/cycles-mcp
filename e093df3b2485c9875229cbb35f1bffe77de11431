@@ -1,0 +1,113 @@
+vitest.config.ts
+  52664487fec244fb 1-12
+src/__tests__/config.test.ts
+  52664487fec244fb 2-30
+src/tools/add-task.ts
+  52664487fec244fb 1-2,7,11-12,14-15,104-105,116,168,199,226,238,242,249,257,271,278,285,296,357,365-367,373-375,420
+src/templates/__tests__/templates.test.ts
+  52664487fec244fb 2,4,6,8-119
+src/__tests__/types.test.ts
+  52664487fec244fb 2,4,6-46,48-52,54-133
+package.json
+  52664487fec244fb 10-20,26-31,44-46,48,51-55,57,59,62-63
+biome.json
+  52664487fec244fb 1-32
+README.md
+  52664487fec244fb 3-6,23,25-35,38,41,44-51,54,56-61,68,74,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.24",
+  "base_commit_sha": "e093df3b2485c9875229cbb35f1bffe77de11431",
+  "prompts": {
+    "52664487fec244fb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3579939f-760e-42f6-a3a6-c81ab1a4c2b5",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Brenden Bishop <btbishop93@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "can you come up with a brief description of this app based on these others...\n\n{\n      \"title\": \"Braver Search\",\n      \"href\": \"https://apps.apple.com/us/app/braver-search/id6740840706\",\n      \"dates\": \"2025 - Now\",\n      \"description\": \"Safari plugin for iOS/Mac that makes Brave Search the default browser. **18,500+ daily active users**.\",\n      \"technologies\": [\"Swift\", \"Safari Extensions\"],\n      \"image\": \"/projects/braver.png\",\n      \"links\": [\n        {\n          \"type\": \"App Store\",\n          \"href\": \"https://apps.apple.com/us/app/braver-search/id6740840706\"\n        }\n      ]\n    },\n    {\n      \"title\": \"App Preview Converter\",\n      \"href\": \"https://app-preview-converter.vercel.app\",\n      \"dates\": \"2024 - Now\",\n      \"description\": \"Web app using ffmpeg to convert .mp4 videos for Apple App Store compliance.\",\n      \"technologies\": [\"Next.js\", \"Vercel\", \"ffmpeg\"],\n      \"image\": \"/projects/app-preview.png\",\n      \"links\": [\n        {\n          \"type\": \"Website\",\n          \"href\": \"https://app-preview-converter.vercel.app\"\n        }\n      ]\n    },\n    {\n      \"title\": \"Jumblebook Notes\",\n      \"href\": \"https://apps.apple.com/us/app/jumblebook-notes/id6741652060\",\n      \"dates\": \"2022 - Now\",\n      \"description\": \"Encrypted note-taking app built with Flutter and Dart, deployed to iOS and Android.\",\n      \"technologies\": [\"Flutter\", \"Dart\"],\n      \"image\": \"/projects/jumblebook.png\",\n      \"links\": [\n        {\n          \"type\": \"App Store\",\n          \"href\": \"https://apps.apple.com/us/app/jumblebook-notes/id6741652060\"\n        }\n      ]\n    }",
+          "timestamp": "2025-12-18T15:41:52.889Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me check out the codebase to understand what this app does.",
+          "timestamp": "2025-12-18T15:41:56.929Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Based on what I see, here's a description matching your style:\n\n**Option 1 (feature-focused):**\n> MCP server for AI-powered dev workflow management—time-boxed cycles, task tracking, and git automation for Cursor and other MCP clients.\n\n**Option 2 (shorter, punchier):**\n> MCP server that brings cycle-based project management and git workflow automation to Cursor and AI coding assistants.\n\n**Option 3 (more casual):**\n> Development workflow tool that plugs into Cursor via MCP—manages cycles, tasks, and handles git busywork automatically.\n\nWhich vibe fits better? Also—do you have any usage stats or is this mainly a personal tool? That could punch it up like the Braver Search one.",
+          "timestamp": "2025-12-18T15:42:03.312Z"
+        },
+        {
+          "type": "user",
+          "text": "I like option 3 the best, but I think we may need to give a brief explanation of what a cycle is? Like if I have no idea what this is say I'm a recruiter not a developer",
+          "timestamp": "2025-12-18T15:44:05.091Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Good call. \"Cycle\" is jargon without context. Here's a revised take:\n\n> Development workflow tool that plugs into Cursor via MCP—organizes work into time-boxed sprints with task tracking and automated git operations.\n\nOr even simpler:\n\n> AI-powered project management tool for Cursor—breaks work into focused sprints, tracks tasks, and automates git commits/PRs.\n\nSecond one drops \"MCP\" entirely since recruiters won't care about the protocol. \"Sprints\" is more universally understood than \"cycles.\" Thoughts?",
+          "timestamp": "2025-12-18T15:44:09.664Z"
+        },
+        {
+          "type": "user",
+          "text": "you mention its for Cursor, is this true is it only set up for Cursor MCPs can plug into anything I thought?",
+          "timestamp": "2025-12-18T15:45:01.626Z"
+        },
+        {
+          "type": "assistant",
+          "text": "You're right, I'm wrong. MCP is protocol-agnostic—works with Claude Desktop, Cursor, and anything else that supports MCP. The README just uses Cursor as the setup example.\n\nCorrected:\n\n> AI-powered project management tool for MCP-compatible editors—breaks work into focused sprints, tracks tasks, and automates git commits/PRs.\n\nOr drop the tech reference entirely:\n\n> Project management tool for AI coding assistants—breaks work into focused sprints, tracks tasks, and automates git operations.\n\nSecond one is probably cleaner for a recruiter audience since they won't know MCP either.",
+          "timestamp": "2025-12-18T15:45:07.455Z"
+        },
+        {
+          "type": "user",
+          "text": "Close, but I think one of the best features is its ability to generate well scoped dev tasks via your PRD or product requirements based on the cycle times",
+          "timestamp": "2025-12-18T15:46:27.358Z"
+        },
+        {
+          "type": "assistant",
+          "text": "That's the real value prop I missed. Let me retry:\n\n> Project management tool for AI coding assistants—generates well-scoped dev tasks from product requirements based on your available time and skill level, then automates the git workflow.\n\nOr tighter:\n\n> AI project management tool that turns product requirements into right-sized dev tasks based on your schedule, then handles git automation.\n\nSecond one is punchier. The \"right-sized based on schedule\" captures the cycle time aspect without needing to explain what a cycle is.",
+          "timestamp": "2025-12-18T15:46:33.001Z"
+        },
+        {
+          "type": "user",
+          "text": "2nd one is great, now let's put it in the same json format",
+          "timestamp": "2025-12-18T15:47:05.834Z"
+        },
+        {
+          "type": "assistant",
+          "text": "```json\n{\n  \"title\": \"Cycles MCP\",\n  \"href\": \"https://github.com/brenden/cycles-mcp\",\n  \"dates\": \"2025 - Now\",\n  \"description\": \"AI project management tool that turns product requirements into right-sized dev tasks based on your schedule, then handles git automation.\",\n  \"technologies\": [\"TypeScript\", \"MCP\", \"Bun\"],\n  \"image\": \"/projects/cycles-mcp.png\",\n  \"links\": [\n    {\n      \"type\": \"GitHub\",\n      \"href\": \"https://github.com/brenden/cycles-mcp\"\n    }\n  ]\n}\n```\n\nGuessed on the GitHub URL and image path—adjust as needed. Also assumed you want \"GitHub\" as link type since it's not on an app store.",
+          "timestamp": "2025-12-18T15:47:09.463Z"
+        },
+        {
+          "type": "user",
+          "text": "Perfect! Now we need to analyze this repo and make it adaptable for others to use as an MCP. Right now, it's bespoke to my local folder paths and setup. How can we make this abstract and generic so anyone can install and use it?",
+          "timestamp": "2025-12-18T15:52:35.347Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me analyze the codebase to find what's hardcoded and needs to be made generic.",
+          "timestamp": "2025-12-18T15:52:40.931Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me also check the tool implementations and templates for any hardcoded paths:",
+          "timestamp": "2025-12-18T15:52:46.297Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Good news: the source code is already generic. All tools take `workspaceRoot` as a parameter, so no code changes needed. The issues are purely in the README and distribution method.\n\n**Issues found:**\n\n1. **README.md** - Two hardcoded paths:\n   - Line 22: `cd /Users/brenden/Developer/hobby/cycles-mcp`\n   - Line 41: MCP config points to your local `dist/index.js`\n\n2. **Distribution** - Currently requires users to clone the repo and build. Should be installable via npm/npx.\n\n3. **package.json** - Missing `repository`, `homepage` fields for npm publishing.",
+          "timestamp": "2025-12-18T15:53:01.576Z"
+        }
+      ],
+      "total_additions": 429,
+      "total_deletions": 49,
+      "accepted_lines": 413,
+      "overriden_lines": 8
+    }
+  }
+}
