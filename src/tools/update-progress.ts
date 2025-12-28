@@ -1,5 +1,5 @@
-import { readFile, writeFile, readdir } from "fs/promises";
-import { join } from "path";
+import { readdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { generateProgressBar } from "../templates/index.js";
 
 interface UpdateProgressArgs {
@@ -12,7 +12,7 @@ interface UpdateProgressArgs {
 }
 
 export async function updateProgress(
-  args: UpdateProgressArgs
+  args: UpdateProgressArgs,
 ): Promise<string> {
   const {
     workspaceRoot,
@@ -50,7 +50,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
     if (taskNumber) {
       const taskPattern = new RegExp(
         `- \\[ \\] \\*\\*\\[${taskNumber}\\]`,
-        "g"
+        "g",
       );
       if (content.match(taskPattern)) {
         content = content.replace(taskPattern, `- [x] **[${taskNumber}]`);
@@ -69,8 +69,8 @@ Please run init-workflow first to set up the complete workflow structure.`;
       content = content.replace(
         /\*\*Completed\*\*: \d+\/\d+ tasks \(\d+%\)/,
         `**Completed**: ${completed}/${total} tasks (${Math.round(
-          (completed / total) * 100
-        )}%)`
+          (completed / total) * 100,
+        )}%)`,
       );
       content = content.replace(/\[.*?\] \d+%/, progressBar);
     }
@@ -84,19 +84,19 @@ Please run init-workflow first to set up the complete workflow structure.`;
         // Find the table
         const tableHeaderIndex = content.indexOf("| Date", sessionLogIndex);
         const tableStart = content.indexOf("| ----", tableHeaderIndex);
-        const nextSectionIndex = content.indexOf("\n## ", tableStart);
+        const _nextSectionIndex = content.indexOf("\n## ", tableStart);
 
         if (tableStart !== -1) {
           // Check if there's a "Not started" row
           const notStartedPattern =
-            /\| -    \| -        \| -               \| Not started \|/;
+            /\| - {4}\| - {8}\| - {15}\| Not started \|/;
           if (notStartedPattern.test(content)) {
             // Replace "Not started" row
             content = content.replace(
               notStartedPattern,
               `| ${sessionDate} | ${sessionDuration} | ${taskNumber || "-"} | ${
                 sessionNotes || "-"
-              } |`
+              } |`,
             );
           } else {
             // Add new row after divider

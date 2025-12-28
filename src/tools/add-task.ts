@@ -1,18 +1,18 @@
-import { writeFile, readFile, readdir } from "fs/promises";
-import { join } from "path";
+import { readdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { loadConfig } from "../config.js";
 import {
   loadTemplate,
-  replaceTemplateVars,
   padNumber,
+  replaceTemplateVars,
   TemplateType,
 } from "../templates/index.js";
 import {
-  simpleTierToGranular,
+  type DetailLevel,
+  type DifficultyLevel,
   parseDuration,
-  DifficultyLevel,
-  TaskDuration,
-  DetailLevel,
+  simpleTierToGranular,
+  type TaskDuration,
 } from "../types.js";
 
 interface AddTaskArgs {
@@ -101,8 +101,8 @@ Please run init-workflow first to set up the complete workflow structure.`;
   const existingFiles = await readdir(cyclePath);
   const taskFiles = existingFiles.filter((f) => /^\d{3}-.*\.md$/.test(f));
   const taskNumbers = taskFiles
-    .map((f) => parseInt(f.substring(0, 3)))
-    .filter((n) => !isNaN(n));
+    .map((f) => parseInt(f.substring(0, 3), 10))
+    .filter((n) => !Number.isNaN(n));
   const nextTaskNum = taskNumbers.length > 0 ? Math.max(...taskNumbers) + 1 : 1;
   const taskNumber = padNumber(nextTaskNum, 3);
 
@@ -113,7 +113,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
   const getDetailedContent = (
     provided: string | undefined,
     defaultContent: string,
-    detailLevel: DetailLevel
+    detailLevel: DetailLevel,
   ): string => {
     if (provided) return provided;
 
@@ -165,7 +165,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
     TASK_STEPS: getDetailedContent(
       args.taskSteps,
       "1. Review the requirements\n2. Implement the solution\n3. Test your implementation",
-      detailLevel
+      detailLevel,
     ),
     ACCEPTANCE_CRITERIA:
       args.acceptanceCriteria ||
@@ -196,7 +196,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
     taskTitle,
     taskFileName,
     parseDuration(taskDuration),
-    dependencies
+    dependencies,
   );
 
   return `✅ Task ${taskNumber} created successfully!
@@ -223,7 +223,7 @@ async function updateCycleReadmeWithTask(
   taskTitle: string,
   taskFileName: string,
   duration: number,
-  dependencies: string
+  _dependencies: string,
 ): Promise<void> {
   const readmePath = join(cyclePath, "README.md");
   let content = await readFile(readmePath, "utf-8");
@@ -235,18 +235,18 @@ async function updateCycleReadmeWithTask(
   if (taskListIndex !== -1) {
     // Update task count
     const taskCountMatch = content.match(/## Tasks \((\d+) total\)/);
-    const currentCount = taskCountMatch ? parseInt(taskCountMatch[1]) : 0;
+    const currentCount = taskCountMatch ? parseInt(taskCountMatch[1], 10) : 0;
     const newCount = currentCount + 1;
     content = content.replace(
       /## Tasks \(\d+ total\)/,
-      `## Tasks (${newCount} total)`
+      `## Tasks (${newCount} total)`,
     );
 
     // Find where to insert the new task
     const progressTrackerIndex = content.indexOf("## Progress Tracker");
     const taskListSection = content.substring(
       taskListIndex,
-      progressTrackerIndex
+      progressTrackerIndex,
     );
 
     // Check if there's already task content
@@ -254,7 +254,7 @@ async function updateCycleReadmeWithTask(
       // Replace the placeholder
       content = content.replace(
         /_No tasks yet\. Use add-task to create tasks\._/,
-        `- [ ] **[${taskNumber}](./${taskFileName})** - ${taskTitle} (${duration}h)`
+        `- [ ] **[${taskNumber}](./${taskFileName})** - ${taskTitle} (${duration}h)`,
       );
     } else {
       // Add to existing list
@@ -268,21 +268,21 @@ async function updateCycleReadmeWithTask(
 
     // Update estimated hours
     const estimatedHoursMatch = content.match(
-      /\*\*Estimated Hours\*\*: (\d+(?:\.\d+)?) hours/
+      /\*\*Estimated Hours\*\*: (\d+(?:\.\d+)?) hours/,
     );
     if (estimatedHoursMatch) {
       const currentHours = parseFloat(estimatedHoursMatch[1]);
       const newHours = currentHours + duration;
       content = content.replace(
         /\*\*Estimated Hours\*\*: \d+(?:\.\d+)? hours/,
-        `**Estimated Hours**: ${newHours} hours`
+        `**Estimated Hours**: ${newHours} hours`,
       );
     }
 
     // Update task count in progress tracker
     content = content.replace(
       /\*\*Completed\*\*: \d+\/\d+ tasks/,
-      `**Completed**: 0/${newCount} tasks`
+      `**Completed**: 0/${newCount} tasks`,
     );
 
     // Regenerate task dependencies section
@@ -293,7 +293,7 @@ async function updateCycleReadmeWithTask(
 async function regenerateTaskDependencies(
   cyclePath: string,
   content: string,
-  readmePath: string
+  readmePath: string,
 ): Promise<void> {
   // Read all task files to extract dependencies
   const taskFiles = await readdir(cyclePath);
@@ -354,7 +354,7 @@ async function regenerateTaskDependencies(
   // Group tasks level by level
   while (processed.size < tasks.length) {
     const currentGroup = tasks.filter(
-      (task) => !processed.has(task.number) && canProcess(task)
+      (task) => !processed.has(task.number) && canProcess(task),
     );
 
     if (currentGroup.length === 0) {
@@ -362,13 +362,17 @@ async function regenerateTaskDependencies(
       const remaining = tasks.filter((task) => !processed.has(task.number));
       if (remaining.length > 0) {
         groups.push(remaining);
-        remaining.forEach((task) => processed.add(task.number));
+        remaining.forEach((task) => {
+          processed.add(task.number);
+        });
       }
       break;
     }
 
     groups.push(currentGroup);
-    currentGroup.forEach((task) => processed.add(task.number));
+    currentGroup.forEach((task) => {
+      processed.add(task.number);
+    });
   }
 
   // Generate dependency section
@@ -386,8 +390,8 @@ async function regenerateTaskDependencies(
         index === 0
           ? "Start Immediately"
           : index === groups.length - 1 && groups.length > 2
-          ? "Final Tasks"
-          : `After Group ${index}`;
+            ? "Final Tasks"
+            : `After Group ${index}`;
 
       dependencySection += `**${emoji} Group ${groupNumber}** (${label}):\n`;
 
@@ -413,8 +417,7 @@ async function regenerateTaskDependencies(
     const before = content.substring(0, depSectionStart);
     const after = content.substring(depSectionEnd);
 
-    const updatedContent =
-      before + "## Task Dependencies\n\n" + dependencySection + "\n" + after;
+    const updatedContent = `${before}## Task Dependencies\n\n${dependencySection}\n${after}`;
 
     await writeFile(readmePath, updatedContent);
   } else {

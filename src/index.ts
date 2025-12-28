@@ -8,12 +8,12 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { initWorkflow } from "./tools/init-workflow.js";
-import { createCycle } from "./tools/create-cycle.js";
-import { addTask } from "./tools/add-task.js";
-import { commitTask, pushBranch, createPR } from "./tools/git-workflow.js";
-import { updateProgress } from "./tools/update-progress.js";
 import { loadTemplate, TemplateType } from "./templates/index.js";
+import { addTask } from "./tools/add-task.js";
+import { createCycle } from "./tools/create-cycle.js";
+import { commitTask, createPR, pushBranch } from "./tools/git-workflow.js";
+import { initWorkflow } from "./tools/init-workflow.js";
+import { updateProgress } from "./tools/update-progress.js";
 
 const server = new Server(
   {
@@ -25,7 +25,7 @@ const server = new Server(
       tools: {},
       resources: {},
     },
-  }
+  },
 );
 
 // List available tools

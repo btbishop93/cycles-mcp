@@ -1,10 +1,10 @@
-import { writeFile, mkdir, readdir } from "fs/promises";
-import { join } from "path";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { loadConfig } from "../config.js";
 import {
   loadTemplate,
-  replaceTemplateVars,
   padNumber,
+  replaceTemplateVars,
   TemplateType,
 } from "../templates/index.js";
 import { formatCycleDuration } from "../types.js";
@@ -42,8 +42,8 @@ Please run init-workflow first to set up the complete workflow structure.`;
   const existing = await readdir(cyclesDir).catch(() => []);
   const cycleNumbers = existing
     .filter((dir) => /^\d{2}-/.test(dir))
-    .map((dir) => parseInt(dir.substring(0, 2)))
-    .filter((n) => !isNaN(n));
+    .map((dir) => parseInt(dir.substring(0, 2), 10))
+    .filter((n) => !Number.isNaN(n));
   const nextCycleNum =
     cycleNumbers.length > 0 ? Math.max(...cycleNumbers) + 1 : 1;
   const cycleNumber = padNumber(nextCycleNum, 2);
@@ -65,7 +65,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
     ESTIMATED_HOURS: config.hours_per_cycle.toString(),
     CYCLE_DESCRIPTION:
       args.cycleDescription ||
-      "This cycle focuses on " + cycleName.toLowerCase() + ".",
+      `This cycle focuses on ${cycleName.toLowerCase()}.`,
     CYCLE_GOAL:
       args.cycleGoal || "Complete all tasks in this cycle successfully.",
     TASK_COUNT: "0",

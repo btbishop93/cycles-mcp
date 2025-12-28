@@ -1,18 +1,13 @@
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { ensureDocsStructure, loadConfig, saveConfig } from "../config.js";
 import {
-  loadConfig,
-  saveConfig,
-  getDefaultConfig,
-  ensureDocsStructure,
-} from "../config.js";
-import {
+  getCurrentDate,
   loadTemplate,
   replaceTemplateVars,
-  getCurrentDate,
   TemplateType,
 } from "../templates/index.js";
-import { CycleConfig } from "../types.js";
+import type { CycleConfig } from "../types.js";
 
 interface InitWorkflowArgs {
   workspaceRoot: string;
@@ -97,7 +92,7 @@ export async function initWorkflow(args: InitWorkflowArgs): Promise<string> {
 
   // Create cycles.md
   const cyclesTemplate = await loadTemplate(TemplateType.CYCLES);
-  const projectName = args.projectName || "Project";
+  const _projectName = args.projectName || "Project";
   const cyclesContent = replaceTemplateVars(cyclesTemplate, {
     CURRENT_CYCLE: "01",
     TOTAL_CYCLES: "1",

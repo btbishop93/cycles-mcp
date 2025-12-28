@@ -1,7 +1,7 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { exec } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import {
   loadTemplate,
   replaceTemplateVars,
@@ -82,7 +82,7 @@ export async function pushBranch(args: PushBranchArgs): Promise<string> {
       "git rev-parse --abbrev-ref HEAD",
       {
         cwd: workspaceRoot,
-      }
+      },
     );
     const branchName = branch.trim();
 
@@ -134,7 +134,7 @@ Please run init-workflow first to set up the complete workflow structure.`;
       "git rev-parse --abbrev-ref HEAD",
       {
         cwd: workspaceRoot,
-      }
+      },
     );
     const branchName = branch.trim();
 
@@ -159,14 +159,14 @@ Please run init-workflow first to set up the complete workflow structure.`;
     // Replace the Changes section
     const prBodyWithChanges = prBody.replace(
       /## Changes\n\n- \n- \n- /,
-      `## Changes\n\n${changesText}`
+      `## Changes\n\n${changesText}`,
     );
 
     // Add notes if provided
     const finalPRBody = notes
       ? prBodyWithChanges.replace(
           /_Any deviations, challenges encountered, or future improvements_/,
-          notes
+          notes,
         )
       : prBodyWithChanges;
 
@@ -178,9 +178,9 @@ Please run init-workflow first to set up the complete workflow structure.`;
       await execAsync(
         `gh pr create --title "${prTitle}" --body "${finalPRBody.replace(
           /"/g,
-          '\\"'
+          '\\"',
         )}" --base main`,
-        { cwd: workspaceRoot }
+        { cwd: workspaceRoot },
       );
 
       // Mark task as complete in cycle README
@@ -198,7 +198,7 @@ Next steps:
 2. Wait for CI/CD checks to pass
 3. Merge the PR when ready
 4. Start the next task`;
-    } catch (ghError) {
+    } catch (_ghError) {
       // If gh CLI fails, provide manual instructions
       return `⚠️ GitHub CLI not available. Please create the PR manually:
 
@@ -222,7 +222,7 @@ After creating the PR, the task will be marked as complete automatically.`;
 async function markTaskComplete(
   workspaceRoot: string,
   cycleNumber: string,
-  taskNumber: string
+  taskNumber: string,
 ): Promise<void> {
   try {
     // Find cycle directory
@@ -253,13 +253,13 @@ async function markTaskComplete(
 
       content = content.replace(
         /\*\*Completed\*\*: \d+\/\d+ tasks \(\d+%\)/,
-        `**Completed**: ${completed}/${total} tasks (${percentage}%)`
+        `**Completed**: ${completed}/${total} tasks (${percentage}%)`,
       );
       content = content.replace(/\[.*?\] \d+%/, `[${bar}] ${percentage}%`);
     }
 
     // Write updated content
-    const { writeFile } = await import("fs/promises");
+    const { writeFile } = await import("node:fs/promises");
     await writeFile(readmePath, content);
   } catch (error) {
     // Silently fail - this is a nice-to-have

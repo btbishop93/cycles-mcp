@@ -1,24 +1,24 @@
-import { readFile, writeFile, mkdir, access } from "fs/promises";
-import { join } from "path";
-import { CycleConfig, CycleConfigSchema } from "./types.js";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { type CycleConfig, CycleConfigSchema } from "./types.js";
 
 const CONFIG_FILENAME = ".cycles-config.json";
 
 export async function loadConfig(
-  workspaceRoot: string
+  workspaceRoot: string,
 ): Promise<CycleConfig | null> {
   try {
     const configPath = join(workspaceRoot, CONFIG_FILENAME);
     const content = await readFile(configPath, "utf-8");
     const parsed = JSON.parse(content);
     return CycleConfigSchema.parse(parsed);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
 
 export async function validateWorkflowInitialized(
-  workspaceRoot: string
+  workspaceRoot: string,
 ): Promise<{ valid: boolean; missing: string[] }> {
   const missing: string[] = [];
 
@@ -58,7 +58,7 @@ export async function validateWorkflowInitialized(
 
 export async function saveConfig(
   workspaceRoot: string,
-  config: CycleConfig
+  config: CycleConfig,
 ): Promise<void> {
   const configPath = join(workspaceRoot, CONFIG_FILENAME);
   await writeFile(configPath, JSON.stringify(config, null, 2));
@@ -77,7 +77,7 @@ export function getDefaultConfig(): CycleConfig {
 }
 
 export async function ensureDocsStructure(
-  workspaceRoot: string
+  workspaceRoot: string,
 ): Promise<void> {
   const docsDir = join(workspaceRoot, "docs");
   const cyclesDir = join(docsDir, "cycles");

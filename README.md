@@ -1,5 +1,9 @@
 # Cycles MCP Server
 
+[![npm version](https://img.shields.io/npm/v/cycles-mcp.svg)](https://www.npmjs.com/package/cycles-mcp)
+[![CI](https://github.com/btbishop93/cycles-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/btbishop93/cycles-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Model Context Protocol (MCP) server for managing development cycles, tasks, and git workflow across all your repositories.
 
 ## Features
@@ -16,37 +20,60 @@ A Model Context Protocol (MCP) server for managing development cycles, tasks, an
 
 ## Installation
 
-### 1. Install Dependencies
+Add to your MCP client settings (`~/.cursor/mcp.json` for Cursor, `~/.config/claude/claude_desktop_config.json` for Claude Desktop):
 
-```bash
-cd /Users/brenden/Developer/hobby/cycles-mcp
-bun install
+### Option A: npx (recommended, zero install)
+
+```json
+{
+  "mcpServers": {
+    "cycles": {
+      "command": "npx",
+      "args": ["cycles-mcp"]
+    }
+  }
+}
 ```
 
-### 2. Build the Server
+### Option B: Global install
 
 ```bash
+npm install -g cycles-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "cycles": {
+      "command": "cycles-mcp"
+    }
+  }
+}
+```
+
+### Option C: Local development
+
+```bash
+git clone https://github.com/btbishop93/cycles-mcp.git
+cd cycles-mcp
+bun install
 bun run build
 ```
-
-### 3. Configure Cursor
-
-Add this to your Cursor MCP settings (`~/.cursor/mcp.json` or workspace `.cursor/mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "cycles": {
       "command": "node",
-      "args": ["/Users/brenden/Developer/hobby/cycles-mcp/dist/index.js"]
+      "args": ["/path/to/cycles-mcp/dist/index.js"]
     }
   }
 }
 ```
 
-### 4. Restart Cursor
+### Restart your MCP client
 
-Restart Cursor to load the MCP server.
+Restart Cursor/Claude Desktop to load the MCP server.
 
 ## Usage
 
